@@ -1,73 +1,127 @@
-# Circular Buffer
+# Erlang Circular Buffer Implementation
 
-Welcome to Circular Buffer on Exercism's Erlang Track.
-If you need help running the tests or submitting your code, check out `HELP.md`.
+A fault-tolerant circular buffer implementation using Erlang/OTP supervision trees and gen_server behaviors.
 
-## Instructions
+```mermaid
+graph TD
+    A[Application] --> B[circular_buffer_sup]
+    A --> C[circular_buffer_sup]
+    
+    subgraph Buffer Instance 1
+    B --> D[circular_buffer_manager]
+    B --> E[circular_buffer_store]
+    end
+    
+    subgraph Buffer Instance 2
+    C --> F[circular_buffer_manager]
+    C --> G[circular_buffer_store]
+    end
+```
 
-A circular buffer, cyclic buffer or ring buffer is a data structure that
-uses a single, fixed-size buffer as if it were connected end-to-end.
+## Features
+- Thread-safe concurrent access
+- Configurable overflow policies (overwrite/reject)
+- Supervision tree for fault tolerance
+- Capacity tracking and space checks
+- Clean OTP-compliant architecture
 
-A circular buffer first starts empty and of some predefined length. For
-example, this is a 7-element buffer:
-<!-- prettier-ignore -->
-    [ ][ ][ ][ ][ ][ ][ ]
+## Installation
+1. Clone the repository
+2. Ensure Erlang/OTP 26+ is installed
+3. Build with Rebar3:
+```bash
+rebar3 compile
+```
 
-Assume that a 1 is written into the middle of the buffer (exact starting
-location does not matter in a circular buffer):
-<!-- prettier-ignore -->
-    [ ][ ][ ][1][ ][ ][ ]
+## Usage
 
-Then assume that two more elements are added — 2 & 3 — which get
-appended after the 1:
-<!-- prettier-ignore -->
-    [ ][ ][ ][1][2][3][ ]
+### Starting the Shell
+```bash
+rebar3 shell --name "buffer@127.0.0.1" --setcookie mycookie
+```
 
-If two elements are then removed from the buffer, the oldest values
-inside the buffer are removed. The two elements removed, in this case,
-are 1 & 2, leaving the buffer with just a 3:
-<!-- prettier-ignore -->
-    [ ][ ][ ][ ][ ][3][ ]
+### Basic Operations
+```erlang
+% Create buffer with size 5
+{ok, Sup1} = circular_buffer_sup:start_link(5),
+Manager1 = circular_buffer:children(Sup1).
 
-If the buffer has 7 elements then it is completely full:
-<!-- prettier-ignore -->
-    [5][6][7][8][9][3][4]
+% Write items
+circular_buffer:write(Manager1, item1),
+circular_buffer:write_attempt(Manager1, item2).
 
-When the buffer is full an error will be raised, alerting the client
-that further writes are blocked until a slot becomes free.
+% Read items
+{ok, Item} = circular_buffer:read(Manager1). % Returns item1
+```
 
-When the buffer is full, the client can opt to overwrite the oldest
-data with a forced write. In this case, two more elements — A & B —
-are added and they overwrite the 3 & 4:
-<!-- prettier-ignore -->
-    [5][6][7][8][9][A][B]
+### Two Buffers in Action
+```erlang
+% Create two independent buffers
+{ok, Sup1} = circular_buffer_sup:start_link(3),
+{ok, Sup2} = circular_buffer_sup:start_link(5),
 
-3 & 4 have been replaced by A & B making 5 now the oldest data in the
-buffer. Finally, if two elements are removed then what would be
-returned is 5 & 6 yielding the buffer:
-<!-- prettier-ignore -->
-    [ ][ ][7][8][9][A][B]
+Manager1 = circular_buffer:children(Sup1),
+Manager2 = circular_buffer:children(Sup2),
 
-Because there is space available, if the client again uses overwrite
-to store C & D then the space where 5 & 6 were stored previously will
-be used not the location of 7 & 8. 7 is still the oldest element and
-the buffer is once again full.
-<!-- prettier-ignore -->
-    [C][D][7][8][9][A][B]
+% Buffer 1 operations
+circular_buffer:write(Manager1, a),
+circular_buffer:write(Manager1, b),
 
-## Source
+% Buffer 2 operations
+circular_buffer:write(Manager2, x),
+circular_buffer:write(Manager2, y),
+circular_buffer:write(Manager2, z),
 
-### Contributed to by
+% Read from both
+{ok, A} = circular_buffer:read(Manager1), % a
+{ok, X} = circular_buffer:read(Manager2). % x
+```
 
-- @ErikSchierboom
-- @iHiD
-- @JordanAdams
-- @juhlig
-- @kytrinyx
-- @NobbZ
-- @tmcgilchrist
-- @xymbol
+## API Reference
 
-### Based on
+### circular_buffer Module
+| Function | Description |
+|----------|-------------|
+| `create(Size)` | Creates new buffer instance |
+| `size(Pid)` | Returns buffer capacity |
+| `write(Pid, Item)` | Write with overwrite policy |
+| `write_attempt(Pid, Item)` | Write without overwriting |
+| `read(Pid)` | Read oldest item |
+| `children(SupPid)` | Get manager PID from supervisor |
 
-Wikipedia - http://en.wikipedia.org/wiki/Circular_buffer
+## Architecture
+
+```
++----------------+
+| Application    |
++----------------+
+       |
+       v
++----------------+       +---------------------+
+| Supervisor     |------>| Manager (gen_server)|
+| (per buffer)   |       +---------------------+
++----------------+               |
+       |                         v
+       |                +---------------------+
+       +--------------->| Store (gen_server)  |
+                        +---------------------+
+```
+
+- **Supervisor**: Manages process lifecycle
+- **Manager**: Handles client API and policies
+- **Store**: Manages raw buffer operations
+
+## Fault Tolerance Features
+- Automatic restarts of failed processes
+- Isolated failures between buffer instances
+- Configurable restart strategies
+- Process monitoring between components
+
+## Contributing
+1. Fork the repository
+2. Add tests in `test/circular_buffer_tests.erl`
+3. Submit PR with:
+```bash
+rebar3 ct
+rebar3 dialyzer
+```

@@ -1,9 +1,13 @@
 {application, erlang_dsa,
   [{description, "Erlang DSA"},
     {vsn, "0.0.1"},
-    {modules, []},
-    {registered, []},
-    {applications, [kernel,
-      stdlib]},
+    {modules, [
+        circular_buffer,
+        circular_buffer_sup,
+        circular_buffer_manager,
+        circular_buffer_store
+    ]},
+    {registered, [circular_buffer_sup]},  % Supervisor registration
+    {applications, [kernel, stdlib]},
     {env, []}
   ]}.

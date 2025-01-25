@@ -1,0 +1,19 @@
+Error: {badmatch,[]}
+[{rebar_prv_shell,kill_old_user,0,
+                  [{file,"/Users/maartz/rebar3/src/rebar_prv_shell.erl"},
+                   {line,182}]},
+ {rebar_prv_shell,setup_shell,1,
+                  [{file,"/Users/maartz/rebar3/src/rebar_prv_shell.erl"},
+                   {line,144}]},
+ {rebar_prv_shell,shell,1,
+                  [{file,"/Users/maartz/rebar3/src/rebar_prv_shell.erl"},
+                   {line,124}]},
+ {rebar_prv_shell,do,1,
+                  [{file,"/Users/maartz/rebar3/src/rebar_prv_shell.erl"},
+                   {line,103}]},
+ {rebar_core,do,2,
+             [{file,"/Users/maartz/rebar3/src/rebar_core.erl"},{line,155}]},
+ {rebar3,run_aux,2,[{file,"/Users/maartz/rebar3/src/rebar3.erl"},{line,183}]},
+ {rebar3,main,1,[{file,"/Users/maartz/rebar3/src/rebar3.erl"},{line,66}]},
+ {init,start_em,1,[]}]
+
