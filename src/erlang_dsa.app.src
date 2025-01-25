@@ -1,5 +1,5 @@
-{application, circular_buffer,
-  [{description, "exercism.org - circular-buffer"},
+{application, erlang_dsa,
+  [{description, "Erlang DSA"},
     {vsn, "0.0.1"},
     {modules, []},
     {registered, []},
